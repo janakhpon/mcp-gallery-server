@@ -14,8 +14,13 @@ export class RedisService implements OnModuleDestroy {
 
     let host = process.env.REDIS_HOST ?? 'localhost';
     const port = parseInt(process.env.REDIS_PORT ?? '6379', 10);
-    const isDocker = process.env.DOCKER_COMPOSE === 'true' || process.env.DOCKER === 'true';
-    if (host === 'redis' && !isDocker && process.env.NODE_ENV !== 'production') {
+    const isDocker =
+      process.env.DOCKER_COMPOSE === 'true' || process.env.DOCKER === 'true';
+    if (
+      host === 'redis' &&
+      !isDocker &&
+      process.env.NODE_ENV !== 'production'
+    ) {
       host = '127.0.0.1';
     }
     this.client = new Redis({ host, port });
@@ -29,5 +34,3 @@ export class RedisService implements OnModuleDestroy {
     await this.client.quit();
   }
 }
-
-

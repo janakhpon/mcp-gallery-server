@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:15
+    container_name: gallery-postgres
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
@@ -14,9 +15,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - gallery-network
 
   redis:
     image: redis:7
+    container_name: gallery-redis
     ports:
       - '6379:6379'
     volumes:
@@ -26,9 +30,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - gallery-network
 
   minio:
     image: minio/minio
+    container_name: gallery-minio
     environment:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio123
@@ -43,8 +50,65 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - gallery-network
+
+  # Prometheus - Metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: gallery-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - gallery-network
+
+  # Grafana - Metrics visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: gallery-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - '3001:3000'
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    depends_on:
+      - prometheus
+    networks:
+      - gallery-network
+
+  # Loki - Log aggregation
+  loki:
+    image: grafana/loki:latest
+    container_name: gallery-loki
+    ports:
+      - '3100:3100'
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - gallery-network
 
 volumes:
   pgdata:
   redisdata:
   miniodata:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+
+networks:
+  gallery-network:
+    driver: bridge

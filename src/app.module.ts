@@ -1,18 +1,22 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ImagesModule } from './images/images.module';
-import { S3Service } from './shared/s3/s3.service';
-import { QueueService } from './jobs/queue/queue.service';
-import { ProcessorService } from './jobs/processor/processor.service';
-import { PrismaService } from './prisma/prisma.service';
-import { RedisService } from './shared/redis/redis.service';
- 
+import { SharedModule } from './shared/shared.module';
+import { JobsModule } from './jobs/jobs.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), ImagesModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    PrometheusModule.register({
+      path: '/metrics',
+      defaultMetrics: { enabled: true },
+    }),
+    SharedModule,
+    JobsModule,
+    ImagesModule,
+  ],
   controllers: [AppController],
-  providers: [AppService, S3Service, QueueService, ProcessorService, PrismaService, RedisService],
 })
 export class AppModule {}
