@@ -16,12 +16,17 @@ npx prisma generate
 
 # 3. Run
 npm run start:dev
+
+# 4. Test (optional)
+npm test              # Unit tests
+npm run test:e2e      # Integration tests
 ```
 
 **Access:**
-- API Docs: http://localhost:3000/api
-- Queue Monitor: http://localhost:3000/admin/queues
-- Health: http://localhost:3000/health
+- 📚 API Docs: http://localhost:3000/api
+- 📊 Queue Monitor: http://localhost:3000/admin/queues
+- 📈 Grafana: http://localhost:3001 (admin/admin)
+- 💚 Health: http://localhost:3000/health
 
 ## Tech Stack
 
@@ -98,11 +103,12 @@ npm run start:dev
 
 ### Images (REST API)
 ```
-GET    /api/v1/images          # List all images (cached)
-POST   /api/v1/images          # Upload image (multipart/form-data)
-GET    /api/v1/images/:id      # Get image details (cached)
-PATCH  /api/v1/images/:id      # Update metadata
-DELETE /api/v1/images/:id      # Delete image
+GET    /api/v1/images              # List all images (cached)
+POST   /api/v1/images              # Upload image (multipart/form-data)
+GET    /api/v1/images/:id          # Get image details (cached)
+GET    /api/v1/images/:id/download # Get presigned download URL 🔒
+PATCH  /api/v1/images/:id          # Update metadata
+DELETE /api/v1/images/:id          # Delete image
 ```
 
 ### Notifications (Real-time)
@@ -114,8 +120,20 @@ GET    /api/v1/notifications/stream   # SSE stream for job completion
 ```
 GET    /                       # Quick health check
 GET    /health                 # Detailed health + metrics
+GET    /metrics                # Prometheus metrics
 GET    /admin/queues           # Bull Board dashboard
 GET    /api                    # Swagger UI
+```
+
+### MCP Integration (AI Clients) 🤖
+```bash
+# For Cursor (Simple!)
+cursor .                    # Open in Cursor
+npm run start:dev          # Start API
+# Ask: "Show me my gallery images using MCP"
+
+# For Claude Desktop (Advanced)
+# See MCP_INTEGRATION.md for details
 ```
 
 ## Environment Variables

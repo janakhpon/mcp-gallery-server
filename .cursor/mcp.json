@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "gallery-api": {
+      "command": "node",
+      "args": [
+        "/home/janakh/Documents/NEST/nestjs-gallery-api/dist/mcp/mcp-server.js"
+      ],
+      "env": {
+        "GALLERY_API_URL": "http://localhost:3000/api/v1"
+      }
+    }
+  }
+}
