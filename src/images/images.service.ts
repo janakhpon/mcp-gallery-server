@@ -61,7 +61,7 @@ export class ImagesService {
     await this.queue.enqueueImageProcessing(image.id);
 
     // Send upload notification
-    await this.notifications.notifyImageUploaded(image.id, image.title);
+    await this.notifications.notifyImageUploaded(image.id, image.title || 'Untitled');
 
     const client = this.redis.getClient();
     // Clear all image-related cache keys
@@ -157,7 +157,7 @@ export class ImagesService {
     const deleted = await this.prisma.image.delete({ where: { id } });
     
     // Send delete notification
-    await this.notifications.notifyImageDeleted(deleted.id, deleted.title);
+    await this.notifications.notifyImageDeleted(deleted.id, deleted.title || 'Untitled');
     
     const client = this.redis.getClient();
     // Clear all image-related cache keys
