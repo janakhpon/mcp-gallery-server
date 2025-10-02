@@ -3,7 +3,7 @@ import { RedisService } from '../redis/redis.service';
 
 export interface ImageNotification {
   imageId: string;
-  status: 'READY' | 'FAILED';
+  status: 'READY' | 'FAILED' | 'UPLOADED' | 'DELETED';
   title?: string;
   s3Url?: string;
   error?: string;
@@ -36,6 +36,56 @@ export class NotificationsService {
 
     this.logger.log(
       `Published notification for image ${notification.imageId} (status: ${notification.status}) to ${subscribers} subscribers`,
+    );
+  }
+
+  /**
+   * Publish notification when image is uploaded
+   */
+  async notifyImageUploaded(
+    imageId: string,
+    title: string,
+  ): Promise<void> {
+    const payload: ImageNotification = {
+      imageId,
+      status: 'UPLOADED',
+      title,
+      timestamp: new Date().toISOString(),
+    };
+
+    const client = this.redis.getClient();
+    const subscribers = await client.publish(
+      this.CHANNEL,
+      JSON.stringify(payload),
+    );
+
+    this.logger.log(
+      `Published upload notification for image ${imageId} to ${subscribers} subscribers`,
+    );
+  }
+
+  /**
+   * Publish notification when image is deleted
+   */
+  async notifyImageDeleted(
+    imageId: string,
+    title: string,
+  ): Promise<void> {
+    const payload: ImageNotification = {
+      imageId,
+      status: 'DELETED',
+      title,
+      timestamp: new Date().toISOString(),
+    };
+
+    const client = this.redis.getClient();
+    const subscribers = await client.publish(
+      this.CHANNEL,
+      JSON.stringify(payload),
+    );
+
+    this.logger.log(
+      `Published delete notification for image ${imageId} to ${subscribers} subscribers`,
     );
   }
 

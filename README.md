@@ -23,10 +23,10 @@ npm run test:e2e      # Integration tests
 ```
 
 **Access:**
-- 📚 API Docs: http://localhost:3000/api
-- 📊 Queue Monitor: http://localhost:3000/admin/queues
-- 📈 Grafana: http://localhost:3001 (admin/admin)
-- 💚 Health: http://localhost:3000/health
+- 📚 API Docs: http://localhost:3001/api
+- 📊 Queue Monitor: http://localhost:3001/admin/queues
+- 📈 Grafana: http://localhost:3002 (admin/admin)
+- 💚 Health: http://localhost:3001/health
 
 ## Tech Stack
 
@@ -72,12 +72,12 @@ npm run start:dev
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| **API (Swagger)** | http://localhost:3000/api | - |
-| **Health Check** | http://localhost:3000/health | - |
-| **Metrics (Prometheus)** | http://localhost:3000/metrics | - |
-| **Bull Board** | http://localhost:3000/admin/queues | - |
-| **SSE Notifications** | http://localhost:3000/api/v1/notifications/stream | - |
-| **Grafana Dashboard** | http://localhost:3001 | `admin` / `admin` |
+| **API (Swagger)** | http://localhost:3001/api | - |
+| **Health Check** | http://localhost:3001/health | - |
+| **Metrics (Prometheus)** | http://localhost:3001/metrics | - |
+| **Bull Board** | http://localhost:3001/admin/queues | - |
+| **SSE Notifications** | http://localhost:3001/api/v1/notifications/stream | - |
+| **Grafana Dashboard** | http://localhost:3002 | `admin` / `admin` |
 | **Prometheus UI** | http://localhost:9090 | - |
 | **MinIO Console** | http://localhost:9001 | `minio` / `minio123` |
 | **PostgreSQL** | localhost:5432 | `postgres` / `postgres` |

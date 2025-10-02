@@ -9,11 +9,13 @@ import {
   UploadedFile,
   UseInterceptors,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
 import type { File as MulterFile } from 'multer';
 import { ImagesService } from './images.service';
 import { CreateImageDto } from './dto/create-image.dto';
 import { UpdateImageDto } from './dto/update-image.dto';
+import { FindImagesDto } from './dto/find-images.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { Image } from './entities/image.entity';
@@ -55,9 +57,9 @@ export class ImagesController {
   }
 
   @Get()
-  @ApiResponse({ status: 200, description: 'List all images', type: [Image] })
-  findAll() {
-    return this.imagesService.findAll();
+  @ApiResponse({ status: 200, description: 'List all images with pagination' })
+  findAll(@Query() query: FindImagesDto) {
+    return this.imagesService.findAll(query);
   }
 
   @Get(':id')

@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { ImagesModule } from './images/images.module';
 import { SharedModule } from './shared/shared.module';
 import { JobsModule } from './jobs/jobs.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { JobsModule } from './jobs/jobs.module';
     SharedModule,
     JobsModule,
     ImagesModule,
+    ChatModule,
   ],
   controllers: [AppController],
 })

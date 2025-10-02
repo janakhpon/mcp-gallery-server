@@ -46,7 +46,7 @@ async function bootstrap() {
       'Image gallery with async processing and real-time notifications',
     )
     .setVersion('1.0.0')
-    .addServer('http://localhost:3000', 'Development')
+    .addServer('http://localhost:3001', 'Development')
     .addServer('https://api.production.com', 'Production')
     .addBearerAuth()
     .build();
@@ -64,7 +64,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  const port = parseInt(process.env.PORT ?? '3000', 10);
+  const port = parseInt(process.env.PORT ?? '3001', 10);
   await app.listen(port);
   
   console.log(`\n🚀 Gallery API Started`);
@@ -74,7 +74,7 @@ async function bootstrap() {
   console.log(`📈 Metrics:       http://localhost:${port}/metrics`);
   console.log(`💚 Health:        http://localhost:${port}/health`);
   console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  console.log(`📊 Grafana:       http://localhost:3001 (admin/admin)`);
+  console.log(`📊 Grafana:       http://localhost:3002 (admin/admin)`);
   console.log(`📈 Prometheus:    http://localhost:9090`);
   console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
 }

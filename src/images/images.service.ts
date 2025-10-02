@@ -1,10 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CreateImageDto } from './dto/create-image.dto';
 import { UpdateImageDto } from './dto/update-image.dto';
+import { FindImagesDto, ImagesResponse } from './dto/find-images.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueueService } from '../jobs/queue/queue.service';
 import { RedisService } from '../shared/redis/redis.service';
 import { S3Service } from '../shared/s3/s3.service';
+import { NotificationsService } from '../shared/notifications/notifications.service';
 import { Image } from '@prisma/client';
 
 @Injectable()
@@ -16,6 +18,7 @@ export class ImagesService {
     private readonly queue: QueueService,
     private readonly redis: RedisService,
     private readonly s3: S3Service,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async create(
@@ -57,22 +60,71 @@ export class ImagesService {
     this.logger.log(`Image ${image.id} created, enqueuing processing job`);
     await this.queue.enqueueImageProcessing(image.id);
 
+    // Send upload notification
+    await this.notifications.notifyImageUploaded(image.id, image.title);
+
     const client = this.redis.getClient();
-    await client.del('images:all');
+    // Clear all image-related cache keys
+    const keys = await client.keys('images:*');
+    if (keys.length > 0) {
+      await client.del(...keys);
+    }
     return image;
   }
 
-  async findAll(): Promise<Image[]> {
-    const key = 'images:all';
-    const client = this.redis.getClient();
-    const cached = await client.get(key);
-    if (cached) return JSON.parse(cached) as Image[];
+  async findAll(params: FindImagesDto = {}): Promise<ImagesResponse> {
+    const { page = 1, limit = 12, status, search } = params;
+    const skip = (page - 1) * limit;
+
+    // Build where clause for filtering
+    const where: any = {};
     
-    const data = await this.prisma.image.findMany({
+    if (status) {
+      where.status = status;
+    }
+    
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { originalName: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    // Create cache key based on parameters
+    const cacheKey = `images:${JSON.stringify({ page, limit, status, search })}`;
+    const client = this.redis.getClient();
+    const cached = await client.get(cacheKey);
+    
+    if (cached) {
+      return JSON.parse(cached) as ImagesResponse;
+    }
+
+    // Get total count for pagination
+    const total = await this.prisma.image.count({ where });
+
+    // Get paginated data
+    const images = await this.prisma.image.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
     });
-    await client.set(key, JSON.stringify(data), 'EX', 60);
-    return data;
+
+    const totalPages = Math.ceil(total / limit);
+
+    const result: ImagesResponse = {
+      images,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
+
+    // Cache the result for 60 seconds
+    await client.set(cacheKey, JSON.stringify(result), 'EX', 60);
+    
+    return result;
   }
 
   async findOne(id: string): Promise<Image | null> {
@@ -93,17 +145,26 @@ export class ImagesService {
     });
     
     const client = this.redis.getClient();
-    await client.del('images:all');
-    await client.del(`images:${id}`);
+    // Clear all image-related cache keys
+    const keys = await client.keys('images:*');
+    if (keys.length > 0) {
+      await client.del(...keys);
+    }
     return updated;
   }
 
   async remove(id: string): Promise<Image> {
     const deleted = await this.prisma.image.delete({ where: { id } });
     
+    // Send delete notification
+    await this.notifications.notifyImageDeleted(deleted.id, deleted.title);
+    
     const client = this.redis.getClient();
-    await client.del('images:all');
-    await client.del(`images:${id}`);
+    // Clear all image-related cache keys
+    const keys = await client.keys('images:*');
+    if (keys.length > 0) {
+      await client.del(...keys);
+    }
     return deleted;
   }
 

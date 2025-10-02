@@ -17,9 +17,18 @@ export class NotificationsController {
   })
   streamNotifications(): Observable<MessageEvent> {
     return new Observable((observer) => {
+      // Send initial connection confirmation
+      observer.next({
+        data: JSON.stringify({
+          type: 'connection',
+          message: 'Connected to notification stream',
+          timestamp: new Date().toISOString(),
+        }),
+      } as MessageEvent);
+
       this.notificationsService.subscribe((notification: ImageNotification) => {
         observer.next({
-          data: notification,
+          data: JSON.stringify(notification),
         } as MessageEvent);
       });
     });

@@ -6,7 +6,7 @@
         "/home/janakh/Documents/NEST/nestjs-gallery-api/dist/mcp/mcp-server.js"
       ],
       "env": {
-        "GALLERY_API_URL": "http://localhost:3000/api/v1"
+        "GALLERY_API_URL": "http://localhost:3001/api/v1"
       }
     }
   }
