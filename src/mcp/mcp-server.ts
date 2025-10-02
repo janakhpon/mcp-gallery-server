@@ -90,6 +90,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: 'search_images',
+        description: 'Search images by title, description, or filename',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Search query to find images',
+            },
+            limit: {
+              type: 'number',
+              description: 'Number of results (default: 20)',
+            },
+          },
+          required: ['query'],
+        },
+      },
+      {
         name: 'delete_image',
         description: 'Delete an image from the gallery',
         inputSchema: {
@@ -106,6 +124,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     ],
   };
 });
+
 
 // Handle tool calls
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -181,9 +200,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      case 'search_images': {
+        const { query, limit = 20 } = args as { query: string; limit?: number };
+        const response = await axios.get(`${API_BASE_URL}/images?search=${encodeURIComponent(query)}&limit=${limit}`);
+        const data = response.data;
+        
+        const resultText = `Found ${data.total} images for "${query}":\n\n${data.images.map((img: any) => 
+          `• ${img.title || img.originalName} (${img.status})`
+        ).join('\n')}`;
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: resultText,
+            },
+          ],
+        };
+      }
+
       case 'delete_image': {
         const { image_id } = args as { image_id: string };
-        const response = await axios.delete(`${API_BASE_URL}/images/${image_id}`);
+        await axios.delete(`${API_BASE_URL}/images/${image_id}`);
         return {
           content: [
             {
@@ -193,6 +231,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ],
         };
       }
+
+
 
       default:
         throw new Error(`Unknown tool: ${name}`);

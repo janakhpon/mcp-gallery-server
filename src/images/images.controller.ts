@@ -62,6 +62,7 @@ export class ImagesController {
     return this.imagesService.findAll(query);
   }
 
+
   @Get(':id')
   @ApiResponse({ status: 200, description: 'Get image by ID', type: Image })
   findOne(@Param('id') id: string) {

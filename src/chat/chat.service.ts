@@ -13,46 +13,61 @@ export class ChatService {
     this.logger.log(`Processing message: ${request.message}`);
 
     try {
-      // Simple keyword-based responses for now
       const message = request.message.toLowerCase();
       let response: ChatResponse;
 
-      if (message.includes('hello') || message.includes('hi')) {
+      if (message.includes('search') && message.split(' ').length > 1) {
+        // Extract search query from message
+        const searchQuery = message.replace(/search\s+/i, '').trim();
+        const images = await this.imagesService.findAll({
+          page: 1,
+          limit: 20,
+          search: searchQuery,
+        });
+        const imageList = images.images
+          .map((img) => `- ${img.title || img.originalName} (${img.status})`)
+          .join('\n');
         response = {
-          content: "Hello! I'm your Gallery Assistant. I can help you manage your images, upload new ones, or answer questions about your gallery. How can I assist you today?",
-          metadata: { action: 'greeting' }
+          content: `Found ${images.total} images for "${searchQuery}":\n\n${imageList}`,
+          metadata: { action: 'search_images', query: searchQuery, count: images.total },
         };
-      } else if (message.includes('list') || message.includes('show') || message.includes('images')) {
-        const images = await this.imagesService.findAll({ page: 1, limit: 10 });
-        const imageList = images.images.map(img => `- ${img.title} (${img.status})`).join('\n');
+      } else if (
+        message.includes('list') ||
+        message.includes('show') ||
+        message.includes('images')
+      ) {
+        const images = await this.imagesService.findAll({
+          page: 1,
+          limit: 10,
+        });
+        const imageList = images.images
+          .map((img) => `- ${img.title || img.originalName} (${img.status})`)
+          .join('\n');
         response = {
-          content: `Here are your recent images:\n\n${imageList}\n\nTotal: ${images.total} images`,
-          metadata: { action: 'list_images', count: images.total }
+          content: `Here are your images:\n\n${imageList}\n\nTotal: ${images.total} images`,
+          metadata: { action: 'list_images', count: images.total },
         };
-      } else if (message.includes('upload') || message.includes('add')) {
+      } else if (message.includes('hello') || message.includes('hi')) {
         response = {
-          content: "To upload an image, you can drag and drop it onto the gallery or use the upload button. I can help you organize and manage your uploaded images!",
-          metadata: { action: 'upload_help' }
+          content: "Hello! I'm your Gallery Assistant. I can help you:\n• List images\n• Search images\n• Upload images\n• Delete images\n• Manage your gallery",
+          metadata: { action: 'greeting' },
         };
       } else if (message.includes('help')) {
         response = {
-          content: "I can help you with:\n\n• Listing your images\n• Uploading new images\n• Managing your gallery\n• Answering questions about your images\n\nJust ask me what you'd like to do!",
-          metadata: { action: 'help' }
+          content: "I can help you with:\n• List images - show all images\n• Search [query] - find specific images\n• Upload images - add new images\n• Delete [id] - remove an image\n• Count images - get total count",
+          metadata: { action: 'help' },
         };
-      } else if (message.includes('status') || message.includes('ready')) {
-        const images = await this.imagesService.findAll({ page: 1, limit: 100 });
-        const readyImages = images.images.filter(img => img.status === 'READY').length;
-        const processingImages = images.images.filter(img => img.status === 'PROCESSING').length;
-        const pendingImages = images.images.filter(img => img.status === 'PENDING').length;
-        
+      } else if (message.includes('count') || message.includes('how many')) {
+        const totalImages = await this.imagesService.findAll({ page: 1, limit: 1 });
         response = {
-          content: `Gallery Status:\n\n• Ready: ${readyImages} images\n• Processing: ${processingImages} images\n• Pending: ${pendingImages} images\n• Total: ${images.total} images`,
-          metadata: { action: 'status', ready: readyImages, processing: processingImages, pending: pendingImages }
+          content: `You have ${totalImages.total} images in your gallery.`,
+          metadata: { action: 'count_images', total: totalImages.total },
         };
       } else {
+        const totalImages = await this.imagesService.findAll({ page: 1, limit: 1 });
         response = {
-          content: "I understand you're asking about: \"" + request.message + "\". I'm here to help with your image gallery. You can ask me to list images, check status, or help with uploads. What would you like to know?",
-          metadata: { action: 'general' }
+          content: `You have ${totalImages.total} images in your gallery. Try:\n• "list images" - to see all images\n• "search [query]" - to find specific images\n• "count images" - to get total count`,
+          metadata: { action: 'general', totalImages: totalImages.total },
         };
       }
 
@@ -77,4 +92,5 @@ export class ChatService {
   async getHistory(limit: number = 50): Promise<ChatResponse[]> {
     return this.chatHistory.slice(-limit);
   }
+
 }
