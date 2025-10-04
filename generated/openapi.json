@@ -1,0 +1,482 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_healthCheck",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Health check",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "AppController_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Detailed health check",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/metrics": {
+      "get": {
+        "operationId": "PrometheusController_index",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prometheus"
+        ]
+      }
+    },
+    "/notifications/stream": {
+      "get": {
+        "operationId": "NotificationsController_streamNotifications",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Subscribe to real-time image processing notifications via SSE",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/images": {
+      "post": {
+        "operationId": "ImagesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Image uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Image"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "images"
+        ]
+      },
+      "get": {
+        "operationId": "ImagesController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 12,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "PROCESSING",
+                "READY",
+                "FAILED"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search in title and description",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List all images with pagination"
+          }
+        },
+        "tags": [
+          "images"
+        ]
+      }
+    },
+    "/images/{id}": {
+      "get": {
+        "operationId": "ImagesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get image by ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Image"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "images"
+        ]
+      },
+      "patch": {
+        "operationId": "ImagesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateImageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Image updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Image"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "images"
+        ]
+      },
+      "delete": {
+        "operationId": "ImagesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Image deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Image"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "images"
+        ]
+      }
+    },
+    "/images/{id}/download": {
+      "get": {
+        "operationId": "ImagesController_getDownloadUrl",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get presigned download URL"
+          }
+        },
+        "tags": [
+          "images"
+        ]
+      }
+    },
+    "/mcp/chat": {
+      "post": {
+        "operationId": "ChatController_sendMessage",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MCPRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Chat response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Send message to MCP chat assistant",
+        "tags": [
+          "chat"
+        ]
+      }
+    },
+    "/mcp/history": {
+      "get": {
+        "operationId": "ChatController_getHistory",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chat history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChatResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get chat history",
+        "tags": [
+          "chat"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Gallery API",
+    "description": "Image gallery with async processing and real-time notifications",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Development"
+    },
+    {
+      "url": "https://api.production.com",
+      "description": "Production"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "Image": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "originalName": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          },
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
+          },
+          "s3Key": {
+            "type": "string"
+          },
+          "s3Url": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "originalName",
+          "mimeType",
+          "size",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateImageDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      },
+      "MCPRequest": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "The message to send to the assistant"
+          },
+          "context": {
+            "type": "object",
+            "description": "Optional context for the conversation"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "ChatResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "The assistant response"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Optional metadata about the response"
+          }
+        },
+        "required": [
+          "content"
+        ]
+      }
+    }
+  }
+}
