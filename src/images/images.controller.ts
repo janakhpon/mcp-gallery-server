@@ -10,20 +10,22 @@ import {
   UseInterceptors,
   BadRequestException,
   Query,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import type { File as MulterFile } from 'multer';
 import { ImagesService } from './images.service';
 import { CreateImageDto } from './dto/create-image.dto';
 import { UpdateImageDto } from './dto/update-image.dto';
 import { FindImagesDto } from './dto/find-images.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiTags, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { Image } from './entities/image.entity';
 
 @ApiTags('images')
 @Controller({ path: 'images', version: '1' })
 export class ImagesController {
-  constructor(private readonly imagesService: ImagesService) {}
+  constructor(private readonly imagesService: ImagesService) { }
 
   @Post()
   @UseInterceptors(FileInterceptor('file'))
@@ -57,8 +59,10 @@ export class ImagesController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'List all images with pagination' })
   @ApiResponse({ status: 200, description: 'List all images with pagination' })
   findAll(@Query() query: FindImagesDto) {
+    console.log(`[Images] findAll called with query:`, query);
     return this.imagesService.findAll(query);
   }
 
@@ -73,6 +77,27 @@ export class ImagesController {
   @ApiResponse({ status: 200, description: 'Get presigned download URL' })
   async getDownloadUrl(@Param('id') id: string) {
     return this.imagesService.getDownloadUrl(id);
+  }
+
+  @Get(':id/proxy')
+  @ApiOperation({ summary: 'Proxy image from S3' })
+  @ApiResponse({ status: 200, description: 'Image data' })
+  async proxyImage(@Param('id') id: string, @Res() res: Response) {
+    console.log(`[Proxy] Requesting image proxy for ID: ${id}`);
+    try {
+      const { buffer, contentType } = await this.imagesService.getFileStream(id);
+      console.log(`[Proxy] Serving image ${id}, type: ${contentType}, size: ${buffer.length} bytes`);
+
+      res.set({
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=3600',
+        'Access-Control-Allow-Origin': '*',
+      });
+      res.send(buffer);
+    } catch (error: any) {
+      console.error(`[Proxy] Failed to proxy image ${id}:`, error.message);
+      res.status(404).json({ message: 'Image proxy failed', error: error.message });
+    }
   }
 
   @Patch(':id')

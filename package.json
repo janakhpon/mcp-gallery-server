@@ -21,7 +21,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "generate:openapi": "node scripts/generate-openapi.js",
     "generate:types": "openapi-typescript http://localhost:3001/api-json -o src/types/api.ts",
-    "generate:all": "node scripts/generate-types.js"
+    "generate:all": "node scripts/generate-types.js",
+    "db:push": "prisma db push"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.899.0",
@@ -36,7 +37,7 @@
     "@willsoto/nestjs-prometheus": "^6.0.2",
     "axios": "^1.12.2",
     "bull": "^4.16.5",
-    "bull-board": "^1.7.2",
+    "bull-board": "^1.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "dd-trace": "^5.67.0",
@@ -49,6 +50,7 @@
     "helmet": "^8.1.0",
     "ioredis": "^5.8.0",
     "multer": "^2.0.2",
+    "openai": "^6.15.0",
     "pino": "^9.12.0",
     "pino-http": "^10.5.0",
     "prom-client": "^15.1.3",

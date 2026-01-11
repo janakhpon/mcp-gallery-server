@@ -17,7 +17,12 @@ async function bootstrap() {
   });
 
   // Security & Logging
-  app.use(helmet());
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: false, // Disable CSP in dev to avoid blocking external images/sources
+    }),
+  );
   app.use(
     pinoHttp({
       logger: pino({
@@ -66,7 +71,7 @@ async function bootstrap() {
 
   const port = parseInt(process.env.PORT ?? '3001', 10);
   await app.listen(port);
-  
+
   console.log(`\n🚀 Gallery API Started`);
   console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
   console.log(`📚 API Docs:      http://localhost:${port}/api`);

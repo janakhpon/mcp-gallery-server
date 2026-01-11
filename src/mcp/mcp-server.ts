@@ -2,7 +2,11 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
+  GetPromptRequestSchema,
+  ListPromptsRequestSchema,
+  ListResourcesRequestSchema,
   ListToolsRequestSchema,
+  ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import axios from 'axios';
 import FormData from 'form-data';
@@ -10,7 +14,7 @@ import * as fs from 'fs';
 
 /**
  * MCP Server for Gallery API
- * Allows AI clients (like Claude Desktop) to upload and manage images
+ * Allows AI clients (like Claude Desktop) to manage images, browse resources, and use prompts.
  */
 
 const API_BASE_URL = process.env.GALLERY_API_URL || 'http://localhost:3000/api/v1';
@@ -23,6 +27,8 @@ const server = new Server(
   {
     capabilities: {
       tools: {},
+      resources: {},
+      prompts: {},
     },
   },
 );
@@ -33,22 +39,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: 'upload_image',
-        description: 'Upload an image to the gallery with optional title and description',
+        description: 'Upload an image to the gallery',
         inputSchema: {
           type: 'object',
           properties: {
-            file_path: {
-              type: 'string',
-              description: 'Absolute path to the image file to upload',
-            },
-            title: {
-              type: 'string',
-              description: 'Optional title for the image',
-            },
-            description: {
-              type: 'string',
-              description: 'Optional description for the image',
-            },
+            file_path: { type: 'string', description: 'Absolute path to image file' },
+            title: { type: 'string', description: 'Optional title' },
+            description: { type: 'string', description: 'Optional description' },
           },
           required: ['file_path'],
         },
@@ -56,53 +53,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'list_images',
         description: 'List all images in the gallery',
-        inputSchema: {
-          type: 'object',
-          properties: {},
-        },
-      },
-      {
-        name: 'get_image',
-        description: 'Get details of a specific image by ID',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            image_id: {
-              type: 'string',
-              description: 'The ID of the image to retrieve',
-            },
-          },
-          required: ['image_id'],
-        },
-      },
-      {
-        name: 'get_download_url',
-        description: 'Get a presigned download URL for an image',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            image_id: {
-              type: 'string',
-              description: 'The ID of the image',
-            },
-          },
-          required: ['image_id'],
-        },
+        inputSchema: { type: 'object', properties: {} },
       },
       {
         name: 'search_images',
-        description: 'Search images by title, description, or filename',
+        description: 'Search images by title or description',
         inputSchema: {
           type: 'object',
           properties: {
-            query: {
-              type: 'string',
-              description: 'Search query to find images',
-            },
-            limit: {
-              type: 'number',
-              description: 'Number of results (default: 20)',
-            },
+            query: { type: 'string', description: 'Search term' },
+            limit: { type: 'number', description: 'Max results (default: 20)' },
           },
           required: ['query'],
         },
@@ -113,10 +73,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            image_id: {
-              type: 'string',
-              description: 'The ID of the image to delete',
-            },
+            image_id: { type: 'string', description: 'The ID of the image' },
           },
           required: ['image_id'],
         },
@@ -125,6 +82,86 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   };
 });
 
+// Handle Resources
+server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  return {
+    resources: [
+      {
+        uri: 'images://catalog',
+        name: 'Gallery Catalog',
+        description: 'JSON list of all images and their metadata',
+        mimeType: 'application/json',
+      },
+    ],
+  };
+});
+
+server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  const { uri } = request.params;
+  if (uri === 'images://catalog') {
+    const response = await axios.get(`${API_BASE_URL}/images`);
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: 'application/json',
+          text: JSON.stringify(response.data, null, 2),
+        },
+      ],
+    };
+  }
+  throw new Error(`Resource not found: ${uri}`);
+});
+
+// Handle Prompts
+server.setRequestHandler(ListPromptsRequestSchema, async () => {
+  return {
+    prompts: [
+      {
+        name: 'curate_gallery',
+        description: 'Guidance for curating your image collection',
+      },
+      {
+        name: 'organize_by_theme',
+        description: 'Suggestions for organizing images by visual theme',
+      },
+    ],
+  };
+});
+
+server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+  const { name } = request.params;
+
+  if (name === 'curate_gallery') {
+    return {
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text: 'I want to curate my gallery. Please list all images, analyze their titles and descriptions, and suggest which duplicates or low-quality entries I should consider deleting.',
+          },
+        },
+      ],
+    };
+  }
+
+  if (name === 'organize_by_theme') {
+    return {
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text: 'Analyze my gallery content and suggest a few thematic categories (e.g., Nature, Urban, Family) that I could use to better organize my descriptions.',
+          },
+        },
+      ],
+    };
+  }
+
+  throw new Error(`Prompt not found: ${name}`);
+});
 
 // Handle tool calls
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -133,15 +170,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (name) {
       case 'upload_image': {
-        const { file_path, title, description } = args as {
-          file_path: string;
-          title?: string;
-          description?: string;
-        };
-
-        if (!fs.existsSync(file_path)) {
-          throw new Error(`File not found: ${file_path}`);
-        }
+        const { file_path, title, description } = args as any;
+        if (!fs.existsSync(file_path)) throw new Error(`File not found: ${file_path}`);
 
         const formData = new FormData();
         formData.append('file', fs.createReadStream(file_path));
@@ -153,98 +183,41 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         });
 
         return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(response.data, null, 2),
-            },
-          ],
+          content: [{ type: 'text', text: JSON.stringify(response.data, null, 2) }],
         };
       }
 
       case 'list_images': {
         const response = await axios.get(`${API_BASE_URL}/images`);
         return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(response.data, null, 2),
-            },
-          ],
-        };
-      }
-
-      case 'get_image': {
-        const { image_id } = args as { image_id: string };
-        const response = await axios.get(`${API_BASE_URL}/images/${image_id}`);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(response.data, null, 2),
-            },
-          ],
-        };
-      }
-
-      case 'get_download_url': {
-        const { image_id } = args as { image_id: string };
-        const response = await axios.get(`${API_BASE_URL}/images/${image_id}/download`);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(response.data, null, 2),
-            },
-          ],
+          content: [{ type: 'text', text: JSON.stringify(response.data, null, 2) }],
         };
       }
 
       case 'search_images': {
-        const { query, limit = 20 } = args as { query: string; limit?: number };
-        const response = await axios.get(`${API_BASE_URL}/images?search=${encodeURIComponent(query)}&limit=${limit}`);
-        const data = response.data;
-        
-        const resultText = `Found ${data.total} images for "${query}":\n\n${data.images.map((img: any) => 
-          `• ${img.title || img.originalName} (${img.status})`
-        ).join('\n')}`;
-
+        const { query, limit = 20 } = args as any;
+        const response = await axios.get(`${API_BASE_URL}/images`, {
+          params: { search: query, limit }
+        });
         return {
-          content: [
-            {
-              type: 'text',
-              text: resultText,
-            },
-          ],
+          content: [{ type: 'text', text: JSON.stringify(response.data, null, 2) }],
         };
       }
 
       case 'delete_image': {
-        const { image_id } = args as { image_id: string };
+        const { image_id } = args as any;
         await axios.delete(`${API_BASE_URL}/images/${image_id}`);
         return {
-          content: [
-            {
-              type: 'text',
-              text: `Image ${image_id} deleted successfully`,
-            },
-          ],
+          content: [{ type: 'text', text: `Image ${image_id} deleted` }],
         };
       }
-
-
 
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
   } catch (error: any) {
     return {
-      content: [
-        {
-          type: 'text',
-          text: `Error: ${error.message}`,
-        },
-      ],
+      content: [{ type: 'text', text: `Error: ${error.message}` }],
       isError: true,
     };
   }
@@ -254,8 +227,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('Gallery API MCP Server running on stdio');
+  process.stderr.write('Gallery API MCP Server running on stdio\n');
 }
 
 main().catch(console.error);
-
