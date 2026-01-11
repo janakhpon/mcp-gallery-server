@@ -19,7 +19,7 @@ export class ImagesService {
     private readonly redis: RedisService,
     private readonly s3: S3Service,
     private readonly notifications: NotificationsService,
-  ) {}
+  ) { }
 
   async create(
     createImageDto: CreateImageDto & {
@@ -76,13 +76,8 @@ export class ImagesService {
     const { page = 1, limit = 12, status, search } = params;
     const skip = (page - 1) * limit;
 
-    // Build where clause for filtering
     const where: any = {};
-    
-    if (status) {
-      where.status = status;
-    }
-    
+    if (status) where.status = status;
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
@@ -91,40 +86,51 @@ export class ImagesService {
       ];
     }
 
-    // Create cache key based on parameters
     const cacheKey = `images:${JSON.stringify({ page, limit, status, search })}`;
     const client = this.redis.getClient();
-    const cached = await client.get(cacheKey);
-    
-    if (cached) {
-      return JSON.parse(cached) as ImagesResponse;
+
+    try {
+      const cached = await client.get(cacheKey);
+      if (cached) return JSON.parse(cached) as ImagesResponse;
+
+      const [total, images] = await Promise.all([
+        this.prisma.image.count({ where }),
+        this.prisma.image.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+      ]);
+
+      const result: ImagesResponse = {
+        images,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+
+      await client.set(cacheKey, JSON.stringify(result), 'EX', 60);
+      return result;
+    } catch (error) {
+      this.logger.error('Error in findAll:', error);
+      // Fallback if Redis fails but DB works
+      const total = await this.prisma.image.count({ where });
+      const images = await this.prisma.image.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      });
+      return {
+        images,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
     }
-
-    // Get total count for pagination
-    const total = await this.prisma.image.count({ where });
-
-    // Get paginated data
-    const images = await this.prisma.image.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: limit,
-    });
-
-    const totalPages = Math.ceil(total / limit);
-
-    const result: ImagesResponse = {
-      images,
-      total,
-      page,
-      limit,
-      totalPages,
-    };
-
-    // Cache the result for 60 seconds
-    await client.set(cacheKey, JSON.stringify(result), 'EX', 60);
-    
-    return result;
   }
 
 
@@ -133,7 +139,7 @@ export class ImagesService {
     const client = this.redis.getClient();
     const cached = await client.get(key);
     if (cached) return JSON.parse(cached) as Image;
-    
+
     const data = await this.prisma.image.findUnique({ where: { id } });
     if (data) await client.set(key, JSON.stringify(data), 'EX', 300);
     return data;
@@ -144,7 +150,7 @@ export class ImagesService {
       where: { id },
       data: updateImageDto,
     });
-    
+
     const client = this.redis.getClient();
     // Clear all image-related cache keys
     const keys = await client.keys('images:*');
@@ -156,10 +162,10 @@ export class ImagesService {
 
   async remove(id: string): Promise<Image> {
     const deleted = await this.prisma.image.delete({ where: { id } });
-    
+
     // Send delete notification
     await this.notifications.notifyImageDeleted(deleted.id, deleted.title || 'Untitled');
-    
+
     const client = this.redis.getClient();
     // Clear all image-related cache keys
     const keys = await client.keys('images:*');
@@ -169,7 +175,7 @@ export class ImagesService {
     return deleted;
   }
 
-  async getDownloadUrl(id: string): Promise<{ url: string; expiresIn: number }> {
+  async getDownloadUrl(id: string): Promise<{ downloadUrl: string; expiresIn: number }> {
     const image = await this.findOne(id);
     if (!image || !image.s3Key) {
       throw new Error('Image not found or not yet processed');
@@ -177,10 +183,25 @@ export class ImagesService {
 
     const bucket = process.env.S3_BUCKET ?? 'image-gallery';
     const url = await this.s3.getSignedUrl(bucket, image.s3Key, 3600);
-    
+
     return {
-      url,
+      downloadUrl: url,
       expiresIn: 3600, // 1 hour
+    };
+  }
+
+  async getFileStream(id: string): Promise<{ buffer: Buffer; contentType: string }> {
+    const image = await this.findOne(id);
+    if (!image || !image.s3Key) {
+      throw new Error('Image not found or not yet processed');
+    }
+
+    const bucket = process.env.S3_BUCKET ?? 'image-gallery';
+    const buffer = await this.s3.getObjectBuffer(bucket, image.s3Key);
+
+    return {
+      buffer,
+      contentType: image.mimeType,
     };
   }
 }

@@ -15,7 +15,7 @@ export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
   private readonly CHANNEL = 'image:notifications';
 
-  constructor(private readonly redis: RedisService) {}
+  constructor(private readonly redis: RedisService) { }
 
   /**
    * Publish notification when image processing completes
@@ -91,8 +91,9 @@ export class NotificationsService {
 
   /**
    * Subscribe to image notifications (for real-time clients like WebSocket/SSE)
+   * Returns an unsubscribe function to clean up resources
    */
-  subscribe(callback: (notification: ImageNotification) => void): void {
+  subscribe(callback: (notification: ImageNotification) => void): () => void {
     const subscriber = this.redis.getClient().duplicate();
 
     subscriber.subscribe(this.CHANNEL, (err, count) => {
@@ -111,5 +112,13 @@ export class NotificationsService {
         this.logger.error('Failed to parse notification', err);
       }
     });
+
+    // Return cleanup function
+    return () => {
+      this.logger.log('Unsubscribing from notifications and closing client');
+      subscriber.quit().catch((err) => {
+        this.logger.error('Error closing Redis subscription client', err);
+      });
+    };
   }
 }

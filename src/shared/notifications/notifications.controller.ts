@@ -9,7 +9,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 @ApiTags('notifications')
 @Controller({ path: 'notifications', version: '1' })
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(private readonly notificationsService: NotificationsService) { }
 
   @Sse('stream')
   @ApiOperation({
@@ -26,11 +26,17 @@ export class NotificationsController {
         }),
       } as MessageEvent);
 
-      this.notificationsService.subscribe((notification: ImageNotification) => {
-        observer.next({
-          data: JSON.stringify(notification),
-        } as MessageEvent);
-      });
+      const unsubscribe = this.notificationsService.subscribe(
+        (notification: ImageNotification) => {
+          observer.next({
+            data: JSON.stringify(notification),
+          } as MessageEvent);
+        },
+      );
+
+      return () => {
+        unsubscribe();
+      };
     });
   }
 }
