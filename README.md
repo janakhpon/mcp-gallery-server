@@ -27,11 +27,12 @@ Then reality hits and The AI:
 
 That’s when MCP starts to make sense.
 
+![](./docs/madara.webp)
+
 > “All things in this world are bound by the same rules.”
 > — Madara Uchiha
 
 AI is not special. It should follow the same rules as everything else in your system.
-
 
 ### What MCP Actually Is
 
@@ -156,9 +157,10 @@ And boring systems:
 - break less
 - wake you up less at night
 
+![](./docs/d9f8c.webp)
+
 > “Power without control is meaningless.”
 > — Madara Uchiha
-
 
 ### When MCP Makes Sense
 
