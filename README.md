@@ -1,6 +1,8 @@
-# MCP in Modern Development
+### MCP in Modern Development
 
-### Not magic. Not hype. Just a clean way to let AI touch your system without breaking it.
+Not magic. Not hype. Just a clean way to let AI touch your system without breaking it.
+
+![](./docs/175500895751.webp)
 
 Most apps today look like this:
 
@@ -25,7 +27,13 @@ Then reality hits and The AI:
 
 That’s when MCP starts to make sense.
 
-## What MCP Actually Is
+> “All things in this world are bound by the same rules.”
+> — Madara Uchiha
+
+AI is not special. It should follow the same rules as everything else in your system.
+
+
+### What MCP Actually Is
 
 **MCP (Model Context Protocol)** is a way to expose your system to AI **safely and clearly**.
 
@@ -41,7 +49,7 @@ MCP just defines:
 
 No more. No less.
 
-## MCP Is NOT Replacing Your UI, it will work along with it
+### MCP Is NOT Replacing Your UI, it will work along with it
 
 MCP is **not** not about:
 
@@ -57,7 +65,7 @@ Your app still works the normal way, users can:
 
 MCP simply adds another way to interact with your app: "Same backend. Same rules. Same permissions".
 
-## A normal app, with MCP added
+### A normal app, with MCP added
 
 Without MCP:
 
@@ -78,7 +86,7 @@ So, no magic here, no hidden secrets, no hidden logic, and
 - **Business logic doesn’t move**
 - **Permissions still live on the backend**
 
-## What MCP Exposes?
+### What MCP Exposes?
 
 MCP does NOT expose:
 
@@ -112,7 +120,7 @@ Each one:
 
 The AI doesn’t “figure things out”. It **requests permission to act**.
 
-## “But Isn’t This Just Tool Calling?”
+### “But Isn’t This Just Tool Calling?”
 
 Yes… and no.
 
@@ -132,7 +140,7 @@ Tool calling is **part of the story**, not the whole story.
 - same rules everywhere
 - easier to audit and reason about
 
-## Why MCP Feels Boring (And That’s Good)
+### Why MCP Feels Boring
 
 MCP does not make AI smarter.
 
@@ -148,10 +156,11 @@ And boring systems:
 - break less
 - wake you up less at night
 
-> “The strongest systems are the ones you don’t notice.”
-> — every senior engineer ever
+> “Power without control is meaningless.”
+> — Madara Uchiha
 
-## When MCP Makes Sense
+
+### When MCP Makes Sense
 
 Use MCP when:
 
@@ -167,7 +176,7 @@ Skip MCP when:
 - you’re just experimenting
 - mistakes don’t matter
 
-# Hands-On Section, MCP in a Real App (Web + Mobile)
+### Hands-On Section, MCP in a Real App (Web + Mobile)
 
 Enough theory. Let’s build something real.
 
@@ -184,7 +193,7 @@ No Claude Desktop.
 No special client.
 Just real apps.
 
-## The MCP Server
+### The MCP Server
 
 The MCP server is **not your backend**.
 
@@ -232,7 +241,7 @@ This says:
 
 > “These are the ONLY things AI is allowed to see and do.”
 
-## Tools = Actions (Write / Change)
+### Tools = Actions (Write / Change)
 
 Examples:
 
@@ -248,7 +257,7 @@ Each tool:
 
 This is the **main safety layer**.
 
-## Resources = Read-Only
+### Resources = Read-Only
 
 Resources let AI **read data safely**.
 
@@ -266,7 +275,7 @@ AI can:
 
 But: "cannot modify"
 
-## Prompts = Reusable Guidance
+### Prompts = Reusable Guidance
 
 Prompts are:
 
@@ -279,7 +288,7 @@ They reduce:
 - prompt drift
 - copy-paste chaos
 
-## Tool Execution Flow (Important)
+### Tool Execution Flow (Important)
 
 When AI wants to act:
 
@@ -293,7 +302,7 @@ Hard rule:
 
 > **AI never talks to your backend directly**
 
-## Why This Matters in Real Apps
+### Why This Matters in Real Apps
 
 Now look at your apps:
 
@@ -317,7 +326,7 @@ Both:
 
 No duplication. No special logic per platform.
 
-## MCP + Traditional UI = Best Combo
+### MCP + Traditional UI = Best Combo
 
 This is the key idea of the whole article:
 
@@ -336,7 +345,7 @@ AI just:
 - reduces clicks
 - understands intent
 
-## Real Example
+### Real Example
 
 User types:
 
@@ -353,7 +362,7 @@ What happens:
 
 Nothing magical. Just clean layers.
 
-## Final Thought
+### Final Thought
 
 MCP is not about AI.
 
@@ -379,7 +388,7 @@ If you already have:
 
 MCP is just the missing piece that lets AI join the system **without breaking it**.
 
-## Quick Start
+### Quick Start
 
 ```bash
 # 1. Environment
@@ -396,8 +405,8 @@ npm run start:dev
 ngrok http 3001 # for react native
 ```
 
-## Resources
+### Resources
 
-[GitHub Repository for MCP server](https://github.com/janakhpon/nestjs-gallery-api)
-[GitHub Repository for Web](https://github.com/janakhpon/nestjs-gallery-ui)
-[GitHub Repository for Mobile](https://github.com/janakhpon/nestjs-gallery-mobile)
+- [GitHub Repository for MCP server](https://github.com/janakhpon/nestjs-gallery-api)
+- [GitHub Repository for Web](https://github.com/janakhpon/nestjs-gallery-ui)
+- [GitHub Repository for Mobile](https://github.com/janakhpon/nestjs-gallery-mobile)
