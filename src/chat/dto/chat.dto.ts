@@ -6,9 +6,9 @@ export class MCPRequest {
   @IsString()
   message: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Optional context for the conversation',
-    required: false 
+    required: false
   })
   @IsOptional()
   @IsObject()
@@ -16,15 +16,20 @@ export class MCPRequest {
     currentImages?: string[];
     userId?: string;
   };
+
+  @ApiProperty({ description: 'The AI provider to use', required: false, enum: ['openai', 'gemini'] })
+  @IsString()
+  @IsOptional()
+  provider?: 'openai' | 'gemini';
 }
 
 export class ChatResponse {
   @ApiProperty({ description: 'The assistant response' })
   content: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Optional metadata about the response',
-    required: false 
+    required: false
   })
   metadata?: {
     imageId?: string;
