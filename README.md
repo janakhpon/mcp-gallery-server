@@ -412,3 +412,4 @@ ngrok http 3001 # for react native
 - [GitHub Repository for MCP server](https://github.com/janakhpon/mcp-gallery-server)
 - [GitHub Repository for Web](https://github.com/janakhpon/nestjs-gallery-ui)
 - [GitHub Repository for Mobile](https://github.com/janakhpon/nestjs-gallery-mobile)
+- [Read other articles](https://vlog.zinmin.com/)
