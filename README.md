@@ -1,8 +1,8 @@
-### MCP in Modern Development
+# MCP in Modern Development: When, Why, and How to Use It
 
-Not magic. Not hype. Just a clean way to let AI touch your system without breaking it.
+_Not magic. Not hype. Just a clean way to let AI touch your system without breaking it._
 
-![](./docs/175500895751.webp)
+![Article cover - MCP in real apps: an MCP layer between an AI assistant and a REST API, giving safe AI access to your system](./docs/175500895751.webp)
 
 Most apps today look like this:
 
